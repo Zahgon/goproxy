@@ -13,27 +13,8 @@ type CertStorage struct {
 }
 
 func (cs *CertStorage) Fetch(hostname string, gen func() (*tls.Certificate, error)) (*tls.Certificate, error) {
-	cs.mtx.RLock()
-	cert, ok := cs.certs[hostname]
-	cs.mtx.RUnlock()
-	if ok {
-		return cert, nil
-	}
-
-	cert, err := gen()
-	if err != nil {
-		return nil, err
-	}
-
-	cs.mtx.Lock()
-	cs.certs[hostname] = cert
-	cs.mtx.Unlock()
-
-	return cert, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
-func NewCertStorage() *CertStorage {
-	return &CertStorage{
-		certs: make(map[string]*tls.Certificate),
-	}
-}
+func NewCertStorage() *CertStorage { _ = "STUB: not implemented"; return nil }

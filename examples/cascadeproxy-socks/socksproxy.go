@@ -15,16 +15,8 @@ type SocksAuth struct {
 }
 
 func createSocksProxy(socksAddr string, auth SocksAuth) func(r *http.Request) (*url.URL, error) {
-	return func(r *http.Request) (*url.URL, error) {
-		Url := &url.URL{
-			Scheme: "socks5",
-			Host:   socksAddr,
-		}
-		if auth.Username != "" {
-			Url.User = url.UserPassword(auth.Username, auth.Password)
-		}
-		return Url, nil
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 func main() {

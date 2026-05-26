@@ -13,18 +13,11 @@ package transport
 
 import (
 	"bufio"
-	"compress/gzip"
 	"crypto/tls"
-	"encoding/base64"
-	"errors"
-	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"strings"
 	"sync"
 )
 
@@ -82,29 +75,15 @@ type Transport struct {
 // A nil URL and nil error are returned if no proxy is defined in the
 // environment, or a proxy should not be used for the given request.
 func ProxyFromEnvironment(req *http.Request) (*url.URL, error) {
-	proxy := getenvEitherCase("HTTP_PROXY")
-	if proxy == "" {
-		return nil, nil
-	}
-	if !useProxy(canonicalAddr(req.URL)) {
-		return nil, nil
-	}
-	proxyURL, err := url.Parse(proxy)
-	if err != nil || proxyURL.Scheme == "" {
-		proxyURL, err = url.Parse("http://" + proxy)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("invalid proxy address %q: %w", proxy, err)
-	}
-	return proxyURL, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // ProxyURL returns a proxy function (for use in a Transport)
 // that always returns the same URL.
 func ProxyURL(fixedURL *url.URL) func(*http.Request) (*url.URL, error) {
-	return func(*http.Request) (*url.URL, error) {
-		return fixedURL, nil
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // transportRequest is a wrapper around a *Request that adds
@@ -115,10 +94,8 @@ type transportRequest struct {
 }
 
 func (tr *transportRequest) extraHeaders() http.Header {
-	if tr.extra == nil {
-		tr.extra = make(http.Header)
-	}
-	return tr.extra
+	_ = "STUB: not implemented"
+	return *new(http.Header)
 }
 
 type RoundTripDetails struct {
@@ -129,47 +106,19 @@ type RoundTripDetails struct {
 }
 
 func (t *Transport) DetailedRoundTrip(req *http.Request) (details *RoundTripDetails, resp *http.Response, err error) {
-	if req.URL == nil {
-		return nil, nil, errors.New("http: nil Request.URL")
-	}
-	if req.Header == nil {
-		return nil, nil, errors.New("http: nil Request.Header")
-	}
-	if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
-		t.lk.Lock()
-		var rt RoundTripper
-		if t.altProto != nil {
-			rt = t.altProto[req.URL.Scheme]
-		}
-		t.lk.Unlock()
-		if rt == nil {
-			return nil, nil, &badStringError{"unsupported protocol scheme", req.URL.Scheme}
-		}
-		return rt.DetailedRoundTrip(req)
-	}
-	treq := &transportRequest{Request: req}
-	cm, err := t.connectMethodForRequest(treq)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Get the cached or newly-created connection to either the
-	// host (for http or https), the http proxy, or the http proxy
-	// pre-CONNECTed to https server.  In any case, we'll be ready
-	// to send it requests.
-	pconn, err := t.getConn(cm)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	resp, err = pconn.roundTrip(treq)
-	return &RoundTripDetails{pconn.host, pconn.ip, pconn.isProxy, err}, resp, err
+	_ = "STUB: not implemented"
+	return nil, nil, nil
 }
+
+// Get the cached or newly-created connection to either the
+// host (for http or https), the http proxy, or the http proxy
+// pre-CONNECTed to https server.  In any case, we'll be ready
+// to send it requests.
 
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	_, resp, err = t.DetailedRoundTrip(req)
-	return
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // RegisterProtocol registers a new protocol with scheme.
@@ -179,148 +128,48 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 // RegisterProtocol can be used by other packages to provide
 // implementations of protocol schemes like "ftp" or "file".
 func (t *Transport) RegisterProtocol(scheme string, rt RoundTripper) {
-	if scheme == "http" || scheme == "https" {
-		panic("protocol " + scheme + " already registered")
-	}
-	t.lk.Lock()
-	defer t.lk.Unlock()
-	if t.altProto == nil {
-		t.altProto = make(map[string]RoundTripper)
-	}
-	if _, exists := t.altProto[scheme]; exists {
-		panic("protocol " + scheme + " already registered")
-	}
-	t.altProto[scheme] = rt
+	_ = "STUB: not implemented"
+	return
 }
 
 // CloseIdleConnections closes any connections which were previously
 // connected from previous requests but are now sitting idle in
 // a "keep-alive" state. It does not interrupt any connections currently
 // in use.
-func (t *Transport) CloseIdleConnections() {
-	t.lk.Lock()
-	defer t.lk.Unlock()
-	if t.idleConn == nil {
-		return
-	}
-	for _, conns := range t.idleConn {
-		for _, pconn := range conns {
-			pconn.close()
-		}
-	}
-	t.idleConn = make(map[string][]*persistConn)
-}
+func (t *Transport) CloseIdleConnections() { _ = "STUB: not implemented"; return }
 
 //
 // Private implementation past this point.
 //
 
-func getenvEitherCase(k string) string {
-	if v := os.Getenv(strings.ToUpper(k)); v != "" {
-		return v
-	}
-	return os.Getenv(strings.ToLower(k))
-}
+func getenvEitherCase(k string) string { _ = "STUB: not implemented"; return "" }
 
 func (t *Transport) connectMethodForRequest(treq *transportRequest) (*connectMethod, error) {
-	cm := &connectMethod{
-		targetScheme: treq.URL.Scheme,
-		targetAddr:   canonicalAddr(treq.URL),
-	}
-	if t.Proxy != nil {
-		var err error
-		cm.proxyURL, err = t.Proxy(treq.Request)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return cm, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
 // proxyAuth returns the Proxy-Authorization header to set
 // on requests, if applicable.
-func (cm *connectMethod) proxyAuth() string {
-	if cm.proxyURL == nil {
-		return ""
-	}
-	if u := cm.proxyURL.User; u != nil {
-		return "Basic " + base64.URLEncoding.EncodeToString([]byte(u.String()))
-	}
-	return ""
-}
+func (cm *connectMethod) proxyAuth() string { _ = "STUB: not implemented"; return "" }
 
 // putIdleConn adds pconn to the list of idle persistent connections awaiting
 // a new request.
 // If pconn is no longer needed or not in a good state, putIdleConn
 // returns false.
-func (t *Transport) putIdleConn(pconn *persistConn) bool {
-	t.lk.Lock()
-	defer t.lk.Unlock()
-	if t.DisableKeepAlives || t.MaxIdleConnsPerHost < 0 {
-		pconn.close()
-		return false
-	}
-	if pconn.isBroken() {
-		return false
-	}
-	key := pconn.cacheKey
-	maxIdleConns := t.MaxIdleConnsPerHost
-	if maxIdleConns == 0 {
-		maxIdleConns = DefaultMaxIdleConnsPerHost
-	}
-	if len(t.idleConn[key]) >= maxIdleConns {
-		pconn.close()
-		return false
-	}
-	t.idleConn[key] = append(t.idleConn[key], pconn)
-	return true
-}
+func (t *Transport) putIdleConn(pconn *persistConn) bool { _ = "STUB: not implemented"; return false }
 
 func (t *Transport) getIdleConn(cm *connectMethod) (pconn *persistConn) {
-	t.lk.Lock()
-	defer t.lk.Unlock()
-	if t.idleConn == nil {
-		t.idleConn = make(map[string][]*persistConn)
-	}
-	key := cm.String()
-	for {
-		pconns, ok := t.idleConn[key]
-		if !ok {
-			return nil
-		}
-		if len(pconns) == 1 {
-			pconn = pconns[0]
-			delete(t.idleConn, key)
-		} else {
-			// 2 or more cached connections; pop last
-			// TODO: queue?
-			pconn = pconns[len(pconns)-1]
-			t.idleConn[key] = pconns[0 : len(pconns)-1]
-		}
-		if !pconn.isBroken() {
-			return
-		}
-	}
+	_ = "STUB: not implemented"
+	return nil
 }
 
+// 2 or more cached connections; pop last
+// TODO: queue?
+
 func (t *Transport) dial(network, addr string) (c net.Conn, raddr string, ip *net.TCPAddr, err error) {
-	if t.Dial != nil {
-		ip, err = net.ResolveTCPAddr("tcp", addr)
-		if err != nil {
-			return
-		}
-		c, err = t.Dial(network, addr)
-		raddr = addr
-		return
-	}
-	addri, err := net.ResolveTCPAddr("tcp", addr)
-	if err != nil {
-		return
-	}
-	c, err = net.DialTCP("tcp", nil, addri)
-	raddr = addr
-	ip = addri
-	return
+	_ = "STUB: not implemented"
+	return *new(net.Conn), "", nil, nil
 }
 
 // getConn dials and creates a new persistConn to the target as
@@ -328,135 +177,22 @@ func (t *Transport) dial(network, addr string) (c net.Conn, raddr string, ip *ne
 // and/or setting up TLS.  If this doesn't return an error, the persistConn
 // is ready to write requests to.
 func (t *Transport) getConn(cm *connectMethod) (*persistConn, error) {
-	if pc := t.getIdleConn(cm); pc != nil {
-		return pc, nil
-	}
-
-	conn, raddr, ip, err := t.dial("tcp", cm.addr())
-	if err != nil {
-		if cm.proxyURL != nil {
-			err = fmt.Errorf("http: error connecting to proxy %s: %w", cm.proxyURL, err)
-		}
-		return nil, err
-	}
-
-	pa := cm.proxyAuth()
-
-	pconn := &persistConn{
-		t:        t,
-		cacheKey: cm.String(),
-		conn:     conn,
-		reqch:    make(chan requestAndChan, 50),
-		host:     raddr,
-		ip:       ip,
-	}
-
-	switch {
-	case cm.proxyURL == nil:
-		// Do nothing.
-	case cm.targetScheme == "http":
-		pconn.isProxy = true
-		if pa != "" {
-			pconn.mutateHeaderFunc = func(h http.Header) {
-				h.Set("Proxy-Authorization", pa)
-			}
-		}
-	case cm.targetScheme == "https":
-		connectReq := &http.Request{
-			Method: http.MethodConnect,
-			URL:    &url.URL{Opaque: cm.targetAddr},
-			Host:   cm.targetAddr,
-			Header: make(http.Header),
-		}
-		if pa != "" {
-			connectReq.Header.Set("Proxy-Authorization", pa)
-		}
-		_ = connectReq.Write(conn)
-
-		// Read response.
-		// Okay to use and discard buffered reader here, because
-		// TLS server will not speak until spoken to.
-		br := bufio.NewReader(conn)
-		resp, err := http.ReadResponse(br, connectReq)
-		if err != nil {
-			conn.Close()
-			return nil, err
-		}
-		if resp.StatusCode != http.StatusOK {
-			f := strings.SplitN(resp.Status, " ", 2)
-			conn.Close()
-			return nil, errors.New(f[1])
-		}
-	}
-
-	if cm.targetScheme == "https" {
-		// Initiate TLS and check remote host name against certificate.
-		conn = tls.Client(conn, t.TLSClientConfig)
-		tlsConn, ok := conn.(*tls.Conn)
-		if !ok {
-			return nil, errors.New("invalid TLS connection")
-		}
-		if err = tlsConn.Handshake(); err != nil {
-			return nil, err
-		}
-		if t.TLSClientConfig == nil || !t.TLSClientConfig.InsecureSkipVerify {
-			if err = tlsConn.VerifyHostname(cm.tlsHost()); err != nil {
-				return nil, err
-			}
-		}
-		pconn.conn = conn
-	}
-
-	pconn.br = bufio.NewReader(pconn.conn)
-	pconn.bw = bufio.NewWriter(pconn.conn)
-	go pconn.readLoop()
-	return pconn, nil
+	_ = "STUB: not implemented"
+	return nil, nil
 }
+
+// Do nothing.
+
+// Read response.
+// Okay to use and discard buffered reader here, because
+// TLS server will not speak until spoken to.
+
+// Initiate TLS and check remote host name against certificate.
 
 // useProxy returns true if requests to addr should use a proxy,
 // according to the NO_PROXY or no_proxy environment variable.
 // addr is always a canonicalAddr with a host and port.
-func useProxy(addr string) bool {
-	if len(addr) == 0 {
-		return true
-	}
-	host, _, err := net.SplitHostPort(addr)
-	if err != nil {
-		return false
-	}
-	if host == "localhost" {
-		return false
-	}
-	if ip := net.ParseIP(host); ip != nil {
-		if ip.IsLoopback() {
-			return false
-		}
-	}
-
-	no_proxy := getenvEitherCase("NO_PROXY")
-	if no_proxy == "*" {
-		return false
-	}
-
-	addr = strings.ToLower(strings.TrimSpace(addr))
-	if hasPort(addr) {
-		addr = addr[:strings.LastIndex(addr, ":")]
-	}
-
-	for _, p := range strings.Split(no_proxy, ",") {
-		p = strings.ToLower(strings.TrimSpace(p))
-		if len(p) == 0 {
-			continue
-		}
-		if hasPort(p) {
-			p = p[:strings.LastIndex(p, ":")]
-		}
-		if addr == p || (p[0] == '.' && (strings.HasSuffix(addr, p) || addr == p[1:])) {
-			return false
-		}
-	}
-	return true
-}
+func useProxy(addr string) bool { _ = "STUB: not implemented"; return false }
 
 // connectMethod is the map key (in its String form) for keeping persistent
 // TCP connections alive for subsequent HTTP requests.
@@ -477,31 +213,14 @@ type connectMethod struct {
 	targetAddr   string   // Not used if proxy + http targetScheme (4th example in table)
 }
 
-func (cm *connectMethod) String() string {
-	proxyStr := ""
-	if cm.proxyURL != nil {
-		proxyStr = cm.proxyURL.String()
-	}
-	return strings.Join([]string{proxyStr, cm.targetScheme, cm.targetAddr}, "|")
-}
+func (cm *connectMethod) String() string { _ = "STUB: not implemented"; return "" }
 
 // addr returns the first hop "host:port" to which we need to TCP connect.
-func (cm *connectMethod) addr() string {
-	if cm.proxyURL != nil {
-		return canonicalAddr(cm.proxyURL)
-	}
-	return cm.targetAddr
-}
+func (cm *connectMethod) addr() string { _ = "STUB: not implemented"; return "" }
 
 // tlsHost returns the host name to match against the peer's
 // TLS certificate.
-func (cm *connectMethod) tlsHost() string {
-	h := cm.targetAddr
-	if hasPort(h) {
-		h = h[:strings.LastIndex(h, ":")]
-	}
-	return h
-}
+func (cm *connectMethod) tlsHost() string { _ = "STUB: not implemented"; return "" }
 
 // persistConn wraps a connection, usually a persistent one
 // (but may be used for non-keep-alive requests as well).
@@ -527,105 +246,27 @@ type persistConn struct {
 	ip   *net.TCPAddr
 }
 
-func (pc *persistConn) isBroken() bool {
-	pc.lk.Lock()
-	defer pc.lk.Unlock()
-	return pc.broken
-}
+func (pc *persistConn) isBroken() bool { _ = "STUB: not implemented"; return false }
 
-func (pc *persistConn) readLoop() {
-	alive := true
-	var lastbody io.ReadCloser // last response body, if any, read on this connection
+func (pc *persistConn) readLoop() { _ = "STUB: not implemented"; return }
 
-	for alive {
-		pb, err := pc.br.Peek(1)
+// last response body, if any, read on this connection
 
-		pc.lk.Lock()
-		if pc.numExpectedResponses == 0 {
-			pc.closeLocked()
-			pc.lk.Unlock()
-			if len(pb) > 0 {
-				log.Printf("Unsolicited response received on idle HTTP channel starting with %q; err=%v",
-					string(pb), err)
-			}
-			return
-		}
-		pc.lk.Unlock()
+// Advance past the previous response's body, if the
+// caller hasn't done so.
 
-		rc := <-pc.reqch
+// assumed idempotent
 
-		// Advance past the previous response's body, if the
-		// caller hasn't done so.
-		if lastbody != nil {
-			lastbody.Close() // assumed idempotent
-			lastbody = nil
-		}
-		resp, err := http.ReadResponse(pc.br, rc.req)
+// When there's no response body, we immediately
+// reuse the TCP connection (putIdleConn), but
+// we need to prevent ClientConn.Read from
+// closing the Response.Body on the next
+// loop, otherwise it might close the body
+// before the client code has had a chance to
+// read it (even though it'll just be 0, EOF).
 
-		if err != nil {
-			pc.close()
-		} else {
-			hasBody := rc.req.Method != http.MethodHead && resp.ContentLength != 0
-			if rc.addedGzip && hasBody && resp.Header.Get("Content-Encoding") == "gzip" {
-				resp.Header.Del("Content-Encoding")
-				resp.Header.Del("Content-Length")
-				resp.ContentLength = -1
-				gzReader, zerr := gzip.NewReader(resp.Body)
-				if zerr != nil {
-					pc.close()
-					err = zerr
-				} else {
-					resp.Body = &readFirstCloseBoth{&discardOnCloseReadCloser{gzReader}, resp.Body}
-				}
-			}
-			resp.Body = &bodyEOFSignal{body: resp.Body}
-		}
-
-		if err != nil || resp.Close || rc.req.Close {
-			alive = false
-		}
-
-		hasBody := resp != nil && resp.ContentLength != 0
-		var waitForBodyRead chan bool
-		if alive {
-			if hasBody {
-				bodyEof, ok := resp.Body.(*bodyEOFSignal)
-				if !ok {
-					alive = false
-				}
-				lastbody = resp.Body
-				waitForBodyRead = make(chan bool)
-				bodyEof.fn = func() {
-					if !pc.t.putIdleConn(pc) {
-						alive = false
-					}
-					waitForBodyRead <- true
-				}
-			} else {
-				// When there's no response body, we immediately
-				// reuse the TCP connection (putIdleConn), but
-				// we need to prevent ClientConn.Read from
-				// closing the Response.Body on the next
-				// loop, otherwise it might close the body
-				// before the client code has had a chance to
-				// read it (even though it'll just be 0, EOF).
-				lastbody = nil
-
-				if !pc.t.putIdleConn(pc) {
-					alive = false
-				}
-			}
-		}
-
-		rc.ch <- responseAndError{resp, err}
-
-		// Wait for the just-returned response body to be fully consumed
-		// before we race and peek on the underlying bufio reader.
-		if waitForBodyRead != nil {
-			<-waitForBodyRead
-		}
-	}
-}
+// Wait for the just-returned response body to be fully consumed
+// before we race and peek on the underlying bufio reader.
 
 type responseAndError struct {
 	res *http.Response
@@ -643,60 +284,24 @@ type requestAndChan struct {
 }
 
 func (pc *persistConn) roundTrip(req *transportRequest) (resp *http.Response, err error) {
-	if pc.mutateHeaderFunc != nil {
-		panic("mutateHeaderFunc not supported in modified Transport")
-	}
-
-	// Ask for a compressed version if the caller didn't set their
-	// own value for Accept-Encoding. We only attempted to
-	// uncompress the gzip stream if we were the layer that
-	// requested it.
-	requestedGzip := false
-	if !pc.t.DisableCompression && req.Header.Get("Accept-Encoding") == "" {
-		// Request gzip only, not deflate. Deflate is ambiguous and
-		// not as universally supported anyway.
-		// See: http://www.gzip.org/zlib/zlib_faq.html#faq38
-		requestedGzip = true
-		req.extraHeaders().Set("Accept-Encoding", "gzip")
-	}
-
-	pc.lk.Lock()
-	pc.numExpectedResponses++
-	pc.lk.Unlock()
-
-	// orig: err = req.Request.write(pc.bw, pc.isProxy, req.extra)
-	if pc.isProxy {
-		err = req.Request.WriteProxy(pc.bw)
-	} else {
-		err = req.Request.Write(pc.bw)
-	}
-	if err != nil {
-		pc.close()
-		return nil, err
-	}
-	pc.bw.Flush()
-
-	ch := make(chan responseAndError, 1)
-	pc.reqch <- requestAndChan{req.Request, ch, requestedGzip}
-	re := <-ch
-	pc.lk.Lock()
-	pc.numExpectedResponses--
-	pc.lk.Unlock()
-
-	return re.res, re.err
+	_ = "STUB: not implemented"
+	return nil, nil
 }
 
-func (pc *persistConn) close() {
-	pc.lk.Lock()
-	defer pc.lk.Unlock()
-	pc.closeLocked()
-}
+// Ask for a compressed version if the caller didn't set their
+// own value for Accept-Encoding. We only attempted to
+// uncompress the gzip stream if we were the layer that
+// requested it.
 
-func (pc *persistConn) closeLocked() {
-	pc.broken = true
-	pc.conn.Close()
-	pc.mutateHeaderFunc = nil
-}
+// Request gzip only, not deflate. Deflate is ambiguous and
+// not as universally supported anyway.
+// See: http://www.gzip.org/zlib/zlib_faq.html#faq38
+
+// orig: err = req.Request.write(pc.bw, pc.isProxy, req.extra)
+
+func (pc *persistConn) close() { _ = "STUB: not implemented"; return }
+
+func (pc *persistConn) closeLocked() { _ = "STUB: not implemented"; return }
 
 var portMap = map[string]string{
 	"http":  "80",
@@ -704,13 +309,7 @@ var portMap = map[string]string{
 }
 
 // canonicalAddr returns url.Host but always with a ":port" suffix.
-func canonicalAddr(url *url.URL) string {
-	addr := url.Host
-	if !hasPort(addr) {
-		return addr + ":" + portMap[url.Scheme]
-	}
-	return addr
-}
+func canonicalAddr(url *url.URL) string { _ = "STUB: not implemented"; return "" }
 
 // bodyEOFSignal wraps a ReadCloser but runs fn (if non-nil) at most
 // once, right before the final Read() or Close() call returns, but after
@@ -722,52 +321,24 @@ type bodyEOFSignal struct {
 }
 
 func (es *bodyEOFSignal) Read(p []byte) (n int, err error) {
-	n, err = es.body.Read(p)
-	if es.isClosed && n > 0 {
-		panic("http: unexpected bodyEOFSignal Read after Close; see issue 1725")
-	}
-	if errors.Is(err, io.EOF) && es.fn != nil {
-		es.fn()
-		es.fn = nil
-	}
-	return
+	_ = "STUB: not implemented"
+	return 0, nil
 }
 
-func (es *bodyEOFSignal) Close() (err error) {
-	if es.isClosed {
-		return nil
-	}
-	es.isClosed = true
-	err = es.body.Close()
-	if err == nil && es.fn != nil {
-		es.fn()
-		es.fn = nil
-	}
-	return
-}
+func (es *bodyEOFSignal) Close() (err error) { _ = "STUB: not implemented"; return nil }
 
 type readFirstCloseBoth struct {
 	io.ReadCloser
 	io.Closer
 }
 
-func (r *readFirstCloseBoth) Close() error {
-	if err := r.ReadCloser.Close(); err != nil {
-		r.Closer.Close()
-		return err
-	}
-	if err := r.Closer.Close(); err != nil {
-		return err
-	}
-	return nil
-}
+func (r *readFirstCloseBoth) Close() error { _ = "STUB: not implemented"; return nil }
 
 // discardOnCloseReadCloser consumes all its input on Close.
 type discardOnCloseReadCloser struct {
 	io.ReadCloser
 }
 
-func (d *discardOnCloseReadCloser) Close() error {
-	_, _ = io.Copy(io.Discard, d.ReadCloser) // ignore errors; likely invalid or already closed
-	return d.ReadCloser.Close()
-}
+func (d *discardOnCloseReadCloser) Close() error { _ = "STUB: not implemented"; return nil }
+
+// ignore errors; likely invalid or already closed

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"github.com/elazarl/goproxy"
 )
 
 const (
@@ -21,53 +20,11 @@ const (
 	echoURL   = "wss://localhost:12345"
 )
 
-func echo(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, nil)
-	if err != nil {
-		log.Printf("upgrade: %v\n", err)
-		return
-	}
-	defer c.Close(websocket.StatusNormalClosure, "")
+func echo(w http.ResponseWriter, r *http.Request) { _ = "STUB: not implemented"; return }
 
-	ctx := context.Background()
-	for {
-		mt, message, err := c.Read(ctx)
-		if err != nil {
-			log.Printf("read: %v\n", err)
-			break
-		}
-		log.Printf("recv: %s\n", message)
-		if err := c.Write(ctx, mt, message); err != nil {
-			log.Printf("write: %v\n", err)
-			break
-		}
-	}
-}
+func startEchoServer() { _ = "STUB: not implemented"; return }
 
-func startEchoServer() {
-	log.Println("Starting echo server")
-	go func() {
-		mux := http.NewServeMux()
-		mux.HandleFunc("/", echo)
-		err := http.ListenAndServeTLS(echoAddr, "localhost.pem", "localhost-key.pem", mux)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-}
-
-func startProxy() {
-	log.Println("Starting proxy server")
-	go func() {
-		proxy := goproxy.NewProxyHttpServer()
-		proxy.OnRequest().HandleConnect(goproxy.AlwaysMitm)
-		proxy.Verbose = true
-
-		if err := http.ListenAndServe(proxyAddr, proxy); err != nil {
-			log.Fatal(err)
-		}
-	}()
-}
+func startProxy() { _ = "STUB: not implemented"; return }
 
 func main() {
 	interrupt := make(chan os.Signal, 1)

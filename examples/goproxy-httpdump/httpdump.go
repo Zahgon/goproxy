@@ -1,17 +1,13 @@
 package main
 
 import (
-	"errors"
 	"flag"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"os/signal"
-	"path"
 	"sync"
 	"time"
 
@@ -24,27 +20,11 @@ type FileStream struct {
 	f    *os.File
 }
 
-func NewFileStream(path string) *FileStream {
-	return &FileStream{path, nil}
-}
+func NewFileStream(path string) *FileStream { _ = "STUB: not implemented"; return nil }
 
-func (fs *FileStream) Write(b []byte) (nr int, err error) {
-	if fs.f == nil {
-		fs.f, err = os.Create(fs.path)
-		if err != nil {
-			return 0, err
-		}
-	}
-	return fs.f.Write(b)
-}
+func (fs *FileStream) Write(b []byte) (nr int, err error) { _ = "STUB: not implemented"; return 0, nil }
 
-func (fs *FileStream) Close() error {
-	fmt.Println("Close", fs.path)
-	if fs.f == nil {
-		return errors.New("FileStream was never written into")
-	}
-	return fs.f.Close()
-}
+func (fs *FileStream) Close() error { _ = "STUB: not implemented"; return nil }
 
 type Meta struct {
 	req      *http.Request
@@ -57,52 +37,15 @@ type Meta struct {
 }
 
 func fprintf(nr *int64, err *error, w io.Writer, pat string, a ...any) {
-	if *err != nil {
-		return
-	}
-	var n int
-	n, *err = fmt.Fprintf(w, pat, a...)
-	*nr += int64(n)
-}
-
-func write(nr *int64, err *error, w io.Writer, b []byte) {
-	if *err != nil {
-		return
-	}
-	var n int
-	n, *err = w.Write(b)
-	*nr += int64(n)
-}
-
-func (m *Meta) WriteTo(w io.Writer) (nr int64, err error) {
-	if m.req != nil {
-		fprintf(&nr, &err, w, "Type: request\r\n")
-	} else if m.resp != nil {
-		fprintf(&nr, &err, w, "Type: response\r\n")
-	}
-	fprintf(&nr, &err, w, "ReceivedAt: %v\r\n", m.t)
-	fprintf(&nr, &err, w, "Session: %d\r\n", m.sess)
-	fprintf(&nr, &err, w, "From: %v\r\n", m.from)
-	if m.err != nil {
-		// note the empty response
-		fprintf(&nr, &err, w, "Error: %v\r\n\r\n\r\n\r\n", m.err)
-	} else if m.req != nil {
-		fprintf(&nr, &err, w, "\r\n")
-		buf, err2 := httputil.DumpRequest(m.req, false)
-		if err2 != nil {
-			return nr, err2
-		}
-		write(&nr, &err, w, buf)
-	} else if m.resp != nil {
-		fprintf(&nr, &err, w, "\r\n")
-		buf, err2 := httputil.DumpResponse(m.resp, false)
-		if err2 != nil {
-			return nr, err2
-		}
-		write(&nr, &err, w, buf)
-	}
+	_ = "STUB: not implemented"
 	return
 }
+
+func write(nr *int64, err *error, w io.Writer, b []byte) { _ = "STUB: not implemented"; return }
+
+func (m *Meta) WriteTo(w io.Writer) (nr int64, err error) { _ = "STUB: not implemented"; return 0, nil }
+
+// note the empty response
 
 // HttpLogger is an asynchronous HTTP request/response logger. It traces
 // requests and responses headers in a "log" file in logger directory and dumps
@@ -114,68 +57,24 @@ type HttpLogger struct {
 	errch chan error
 }
 
-func NewLogger(basepath string) (*HttpLogger, error) {
-	f, err := os.Create(path.Join(basepath, "log"))
-	if err != nil {
-		return nil, err
-	}
-	logger := &HttpLogger{basepath, make(chan *Meta), make(chan error)}
-	go func() {
-		for m := range logger.c {
-			if _, err := m.WriteTo(f); err != nil {
-				log.Println("Can't write meta", err)
-			}
-		}
-		logger.errch <- f.Close()
-	}()
-	return logger, nil
-}
+func NewLogger(basepath string) (*HttpLogger, error) { _ = "STUB: not implemented"; return nil, nil }
 
 func (logger *HttpLogger) LogResp(resp *http.Response, ctx *goproxy.ProxyCtx) {
-	body := path.Join(logger.path, fmt.Sprintf("%d_resp", ctx.Session))
-	from := ""
-	if ctx.UserData != nil {
-		from = ctx.UserData.(*transport.RoundTripDetails).TCPAddr.String()
-	}
-	if resp == nil {
-		resp = emptyResp
-	} else {
-		resp.Body = NewTeeReadCloser(resp.Body, NewFileStream(body))
-	}
-	logger.LogMeta(&Meta{
-		resp: resp,
-		err:  ctx.Error,
-		t:    time.Now(),
-		sess: ctx.Session,
-		from: from})
+	_ = "STUB: not implemented"
+	return
 }
 
 var emptyResp = &http.Response{}
 var emptyReq = &http.Request{}
 
 func (logger *HttpLogger) LogReq(req *http.Request, ctx *goproxy.ProxyCtx) {
-	body := path.Join(logger.path, fmt.Sprintf("%d_req", ctx.Session))
-	if req == nil {
-		req = emptyReq
-	} else {
-		req.Body = NewTeeReadCloser(req.Body, NewFileStream(body))
-	}
-	logger.LogMeta(&Meta{
-		req:  req,
-		err:  ctx.Error,
-		t:    time.Now(),
-		sess: ctx.Session,
-		from: req.RemoteAddr})
+	_ = "STUB: not implemented"
+	return
 }
 
-func (logger *HttpLogger) LogMeta(m *Meta) {
-	logger.c <- m
-}
+func (logger *HttpLogger) LogMeta(m *Meta) { _ = "STUB: not implemented"; return }
 
-func (logger *HttpLogger) Close() error {
-	close(logger.c)
-	return <-logger.errch
-}
+func (logger *HttpLogger) Close() error { _ = "STUB: not implemented"; return nil }
 
 // TeeReadCloser extends io.TeeReader by allowing reader and writer to be
 // closed.
@@ -186,23 +85,19 @@ type TeeReadCloser struct {
 }
 
 func NewTeeReadCloser(r io.ReadCloser, w io.WriteCloser) io.ReadCloser {
-	return &TeeReadCloser{io.TeeReader(r, w), w, r}
+	_ = "STUB: not implemented"
+	return *new(io.ReadCloser)
 }
 
 func (t *TeeReadCloser) Read(b []byte) (int, error) {
-	return t.r.Read(b)
+	_ = "STUB: not implemented"
+
+	// Close attempts to close the reader and write. It returns an error if both
+	// failed to Close.
+	return 0, nil
 }
 
-// Close attempts to close the reader and write. It returns an error if both
-// failed to Close.
-func (t *TeeReadCloser) Close() error {
-	err1 := t.c.Close()
-	err2 := t.w.Close()
-	if err1 != nil {
-		return err1
-	}
-	return err2
-}
+func (t *TeeReadCloser) Close() error { _ = "STUB: not implemented"; return nil }
 
 // stoppableListener serves stoppableConn and tracks their lifetime to notify
 // when it is safe to terminate the application.
@@ -216,23 +111,14 @@ type stoppableConn struct {
 	wg *sync.WaitGroup
 }
 
-func newStoppableListener(l net.Listener) *stoppableListener {
-	return &stoppableListener{l, sync.WaitGroup{}}
-}
+func newStoppableListener(l net.Listener) *stoppableListener { _ = "STUB: not implemented"; return nil }
 
 func (sl *stoppableListener) Accept() (net.Conn, error) {
-	c, err := sl.Listener.Accept()
-	if err != nil {
-		return c, err
-	}
-	sl.Add(1)
-	return &stoppableConn{c, &sl.WaitGroup}, nil
+	_ = "STUB: not implemented"
+	return *new(net.Conn), nil
 }
 
-func (sc *stoppableConn) Close() error {
-	sc.wg.Done()
-	return sc.Conn.Close()
-}
+func (sc *stoppableConn) Close() error { _ = "STUB: not implemented"; return nil }
 
 func main() {
 	verbose := flag.Bool("v", false, "should every proxy request be logged to stdout")

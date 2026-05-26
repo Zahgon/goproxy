@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/things-go/go-socks5"
 	"log"
 	"net"
 	"os"
+
+	"github.com/things-go/go-socks5"
 )
 
 func main() {

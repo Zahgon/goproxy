@@ -1,8 +1,6 @@
 package goproxy
 
 import (
-	"bytes"
-	"io"
 	"net/http"
 )
 
@@ -15,20 +13,8 @@ import (
 //			`<!doctype html><html><head><title>Can't use proxy for local addresses</title></head><body/></html>`)
 //	})
 func NewResponse(r *http.Request, contentType string, status int, body string) *http.Response {
-	resp := &http.Response{}
-	resp.Request = r
-	resp.TransferEncoding = r.TransferEncoding
-	resp.Header = make(http.Header)
-	resp.Header.Add("Content-Type", contentType)
-	resp.StatusCode = status
-	resp.Status = http.StatusText(status)
-	resp.Proto = "HTTP/1.1"
-	resp.ProtoMajor = 1
-	resp.ProtoMinor = 1
-	buf := bytes.NewBufferString(body)
-	resp.ContentLength = int64(buf.Len())
-	resp.Body = io.NopCloser(buf)
-	return resp
+	_ = "STUB: not implemented"
+	return nil
 }
 
 const (
@@ -40,5 +26,6 @@ const (
 
 // Alias for NewResponse(r,ContentTypeText,http.StatusAccepted,text).
 func TextResponse(r *http.Request, text string) *http.Response {
-	return NewResponse(r, ContentTypeText, http.StatusAccepted, text)
+	_ = "STUB: not implemented"
+	return nil
 }

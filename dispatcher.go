@@ -1,12 +1,9 @@
 package goproxy
 
 import (
-	"bytes"
-	"io"
 	"net"
 	"net/http"
 	"regexp"
-	"strings"
 )
 
 // ReqCondition.HandleReq will decide whether or not to use the ReqHandler on an HTTP request
@@ -30,79 +27,61 @@ type ReqConditionFunc func(req *http.Request, ctx *ProxyCtx) bool
 type RespConditionFunc func(resp *http.Response, ctx *ProxyCtx) bool
 
 func (c ReqConditionFunc) HandleReq(req *http.Request, ctx *ProxyCtx) bool {
-	return c(req, ctx)
+	_ = "STUB: not implemented"
+	return false
+
+	// ReqConditionFunc cannot test responses. It only satisfies RespCondition interface so that
+	// to be usable as RespCondition.
 }
 
-// ReqConditionFunc cannot test responses. It only satisfies RespCondition interface so that
-// to be usable as RespCondition.
 func (c ReqConditionFunc) HandleResp(resp *http.Response, ctx *ProxyCtx) bool {
-	return c(ctx.Req, ctx)
+	_ = "STUB: not implemented"
+	return false
 }
 
 func (c RespConditionFunc) HandleResp(resp *http.Response, ctx *ProxyCtx) bool {
-	return c(resp, ctx)
+	_ = "STUB: not implemented"
+	return false
+
+	// UrlHasPrefix returns a ReqCondition checking wether the destination URL the proxy client has requested
+	// has the given prefix, with or without the host.
+	// For example UrlHasPrefix("host/x") will match requests of the form 'GET host/x', and will match
+	// requests to url 'http://host/x'
 }
 
-// UrlHasPrefix returns a ReqCondition checking wether the destination URL the proxy client has requested
-// has the given prefix, with or without the host.
-// For example UrlHasPrefix("host/x") will match requests of the form 'GET host/x', and will match
-// requests to url 'http://host/x'
 func UrlHasPrefix(prefix string) ReqConditionFunc {
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		// Make sure to include the / as the first path character when we do a match
-		// using the host
-		relativePath := req.URL.Path
-		if length := len(relativePath); length == 0 || (length > 0 && relativePath[0] != '/') {
-			relativePath = "/" + relativePath
-		}
-		// We use the original value to distinguish between "" and "/" in the user specified string
-		return strings.HasPrefix(req.URL.Path, prefix) ||
-			strings.HasPrefix(req.URL.Host+relativePath, prefix) ||
-			// Scheme value is something like "https", we must include the :// characters
-			strings.HasPrefix(req.URL.Scheme+"://"+req.URL.Host+relativePath, prefix)
-	}
+	_ = "STUB: not implemented"
+	return *new(ReqConditionFunc)
 }
+
+// Make sure to include the / as the first path character when we do a match
+// using the host
+
+// We use the original value to distinguish between "" and "/" in the user specified string
+
+// Scheme value is something like "https", we must include the :// characters
 
 // UrlIs returns a ReqCondition, testing whether or not the request URL is one of the given strings
 // with or without the host prefix.
 // UrlIs("google.com/","foo") will match requests 'GET /' to 'google.com', requests `'GET google.com/' to
 // any host, and requests of the form 'GET foo'.
 func UrlIs(urls ...string) ReqConditionFunc {
-	urlSet := make(map[string]bool)
-	for _, u := range urls {
-		urlSet[u] = true
-	}
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		_, pathOk := urlSet[req.URL.Path]
-		_, hostAndOk := urlSet[req.URL.Host+req.URL.Path]
-		return pathOk || hostAndOk
-	}
+	_ = "STUB: not implemented"
+	return *new(ReqConditionFunc)
 }
 
 // ReqHostMatches returns a ReqCondition, testing whether the host to which the request was directed to matches
 // any of the given regular expressions.
 func ReqHostMatches(regexps ...*regexp.Regexp) ReqConditionFunc {
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		for _, re := range regexps {
-			if re.MatchString(req.Host) {
-				return true
-			}
-		}
-		return false
-	}
+	_ = "STUB: not implemented"
+	return *new(ReqConditionFunc)
 }
 
 // ReqHostIs returns a ReqCondition, testing whether the host to which the request is directed to equal
 // to one of the given strings.
 func ReqHostIs(hosts ...string) ReqConditionFunc {
-	hostSet := make(map[string]bool)
-	for _, h := range hosts {
-		hostSet[h] = true
-	}
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		_, ok := hostSet[req.URL.Host]
-		return ok
-	}
+	_ = "STUB: not implemented"
+	return *new(ReqConditionFunc)
 }
 
 // IsLocalHost checks whether the destination host is localhost.
@@ -126,88 +105,39 @@ var IsLocalHost ReqConditionFunc = func(req *http.Request, ctx *ProxyCtx) bool {
 // UrlMatches returns a ReqCondition testing whether the destination URL
 // of the request matches the given regexp, with or without prefix.
 func UrlMatches(re *regexp.Regexp) ReqConditionFunc {
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		return re.MatchString(req.URL.Path) ||
-			re.MatchString(req.URL.Host+req.URL.Path)
-	}
+	_ = "STUB: not implemented"
+	return *new(ReqConditionFunc)
 }
 
 // DstHostIs returns a ReqCondition testing wether the host in the request url is the given string.
 func DstHostIs(host string) ReqConditionFunc {
+	_ = "STUB: not implemented"
 	// Make sure to perform a case-insensitive host check
-	host = strings.ToLower(host)
-	var port string
-
-	// Check if the user specified a custom port that we need to match
-	if strings.Contains(host, ":") {
-		hostOnly, portOnly, err := net.SplitHostPort(host)
-		if err == nil {
-			host = hostOnly
-			port = portOnly
-		}
-	}
-
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		// Check port matching only if it was specified
-		if port != "" && port != req.URL.Port() {
-			return false
-		}
-
-		return strings.ToLower(req.URL.Hostname()) == host
-	}
+	return *new(ReqConditionFunc)
 }
+
+// Check if the user specified a custom port that we need to match
+
+// Check port matching only if it was specified
 
 // SrcIpIs returns a ReqCondition testing whether the source IP of the request is one of the given strings.
-func SrcIpIs(ips ...string) ReqCondition {
-	return ReqConditionFunc(func(req *http.Request, ctx *ProxyCtx) bool {
-		for _, ip := range ips {
-			if strings.HasPrefix(req.RemoteAddr, ip+":") {
-				return true
-			}
-		}
-		return false
-	})
-}
+func SrcIpIs(ips ...string) ReqCondition { _ = "STUB: not implemented"; return *new(ReqCondition) }
 
 // Not returns a ReqCondition negating the given ReqCondition.
-func Not(r ReqCondition) ReqConditionFunc {
-	return func(req *http.Request, ctx *ProxyCtx) bool {
-		return !r.HandleReq(req, ctx)
-	}
-}
+func Not(r ReqCondition) ReqConditionFunc { _ = "STUB: not implemented"; return *new(ReqConditionFunc) }
 
 // ContentTypeIs returns a RespCondition testing whether the HTTP response has Content-Type header equal
 // to one of the given strings.
 func ContentTypeIs(typ string, types ...string) RespCondition {
-	types = append(types, typ)
-	return RespConditionFunc(func(resp *http.Response, ctx *ProxyCtx) bool {
-		if resp == nil {
-			return false
-		}
-		contentType := resp.Header.Get("Content-Type")
-		for _, typ := range types {
-			if contentType == typ || strings.HasPrefix(contentType, typ+";") {
-				return true
-			}
-		}
-		return false
-	})
+	_ = "STUB: not implemented"
+	return *new(RespCondition)
 }
 
 // StatusCodeIs returns a RespCondition, testing whether or not the HTTP status
 // code is one of the given ints.
 func StatusCodeIs(codes ...int) RespCondition {
-	codeSet := make(map[int]bool)
-	for _, c := range codes {
-		codeSet[c] = true
-	}
-	return RespConditionFunc(func(resp *http.Response, ctx *ProxyCtx) bool {
-		if resp == nil {
-			return false
-		}
-		_, codeMatch := codeSet[resp.StatusCode]
-		return codeMatch
-	})
+	_ = "STUB: not implemented"
+	return *new(RespCondition)
 }
 
 // ProxyHttpServer.OnRequest Will return a temporary ReqProxyConds struct, aggregating the given condtions.
@@ -217,7 +147,8 @@ func StatusCodeIs(codes ...int) RespCondition {
 //
 //	proxy.OnRequest(UrlIs("example.com/foo"),UrlMatches(regexp.MustParse(`.*\.exampl.\com\./.*`)).Do(...)
 func (proxy *ProxyHttpServer) OnRequest(conds ...ReqCondition) *ReqProxyConds {
-	return &ReqProxyConds{proxy, conds}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // ReqProxyConds aggregate ReqConditions for a ProxyHttpServer.
@@ -230,7 +161,8 @@ type ReqProxyConds struct {
 
 // DoFunc is equivalent to proxy.OnRequest().Do(FuncReqHandler(f)).
 func (pcond *ReqProxyConds) DoFunc(f func(req *http.Request, ctx *ProxyCtx) (*http.Request, *http.Response)) {
-	pcond.Do(FuncReqHandler(f))
+	_ = "STUB: not implemented"
+	return
 }
 
 // ReqProxyConds.Do will register the ReqHandler on the proxy,
@@ -241,17 +173,7 @@ func (pcond *ReqProxyConds) DoFunc(f func(req *http.Request, ctx *ProxyCtx) (*ht
 //	proxy.OnRequest(cond1,cond2).Do(handler)
 //	// given request to the proxy, will test if cond1.HandleReq(req,ctx) && cond2.HandleReq(req,ctx) are true
 //	// if they are, will call handler.Handle(req,ctx)
-func (pcond *ReqProxyConds) Do(h ReqHandler) {
-	pcond.proxy.reqHandlers = append(pcond.proxy.reqHandlers,
-		FuncReqHandler(func(r *http.Request, ctx *ProxyCtx) (*http.Request, *http.Response) {
-			for _, cond := range pcond.reqConds {
-				if !cond.HandleReq(r, ctx) {
-					return r, nil
-				}
-			}
-			return h.Handle(r, ctx)
-		}))
-}
+func (pcond *ReqProxyConds) Do(h ReqHandler) { _ = "STUB: not implemented"; return }
 
 // HandleConnect is used when proxy receives an HTTP CONNECT request,
 // it'll then use the HttpsHandler to determine what should it
@@ -265,17 +187,7 @@ func (pcond *ReqProxyConds) Do(h ReqHandler) {
 // will use the default tls configuration.
 //
 //	proxy.OnRequest().HandleConnect(goproxy.AlwaysReject) // rejects all CONNECT requests
-func (pcond *ReqProxyConds) HandleConnect(h HttpsHandler) {
-	pcond.proxy.httpsHandlers = append(pcond.proxy.httpsHandlers,
-		FuncHttpsHandler(func(host string, ctx *ProxyCtx) (*ConnectAction, string) {
-			for _, cond := range pcond.reqConds {
-				if !cond.HandleReq(ctx.Req, ctx) {
-					return nil, ""
-				}
-			}
-			return h.HandleConnect(host, ctx)
-		}))
-}
+func (pcond *ReqProxyConds) HandleConnect(h HttpsHandler) { _ = "STUB: not implemented"; return }
 
 // HandleConnectFunc is equivalent to HandleConnect,
 // for example, accepting CONNECT request if they contain a password in header
@@ -291,7 +203,8 @@ func (pcond *ReqProxyConds) HandleConnect(h HttpsHandler) {
 //		return RejectConnect, host
 //	})
 func (pcond *ReqProxyConds) HandleConnectFunc(f func(host string, ctx *ProxyCtx) (*ConnectAction, string)) {
-	pcond.HandleConnect(FuncHttpsHandler(f))
+	_ = "STUB: not implemented"
+	return
 }
 
 // HijackConnect registers a handler that takes full control of the raw net.Conn
@@ -300,15 +213,8 @@ func (pcond *ReqProxyConds) HandleConnectFunc(f func(host string, ctx *ProxyCtx)
 // It is the handler's responsibility to write an HTTP response (e.g. "HTTP/1.1 200 OK\r\n\r\n")
 // and close the connection when done.
 func (pcond *ReqProxyConds) HijackConnect(f func(req *http.Request, client net.Conn, ctx *ProxyCtx)) {
-	pcond.proxy.httpsHandlers = append(pcond.proxy.httpsHandlers,
-		FuncHttpsHandler(func(host string, ctx *ProxyCtx) (*ConnectAction, string) {
-			for _, cond := range pcond.reqConds {
-				if !cond.HandleReq(ctx.Req, ctx) {
-					return nil, ""
-				}
-			}
-			return &ConnectAction{Action: ConnectHijack, Hijack: f}, host
-		}))
+	_ = "STUB: not implemented"
+	return
 }
 
 // ProxyConds is used to aggregate RespConditions for a ProxyHttpServer.
@@ -322,34 +228,21 @@ type ProxyConds struct {
 
 // ProxyConds.DoFunc is equivalent to proxy.OnResponse().Do(FuncRespHandler(f)).
 func (pcond *ProxyConds) DoFunc(f func(resp *http.Response, ctx *ProxyCtx) *http.Response) {
-	pcond.Do(FuncRespHandler(f))
+	_ = "STUB: not implemented"
+	return
 }
 
 // ProxyConds.Do will register the RespHandler on the proxy, h.Handle(resp,ctx) will be called on every
 // request that matches the conditions aggregated in pcond.
-func (pcond *ProxyConds) Do(h RespHandler) {
-	pcond.proxy.respHandlers = append(pcond.proxy.respHandlers,
-		FuncRespHandler(func(resp *http.Response, ctx *ProxyCtx) *http.Response {
-			for _, cond := range pcond.reqConds {
-				if !cond.HandleReq(ctx.Req, ctx) {
-					return resp
-				}
-			}
-			for _, cond := range pcond.respCond {
-				if !cond.HandleResp(resp, ctx) {
-					return resp
-				}
-			}
-			return h.Handle(resp, ctx)
-		}))
-}
+func (pcond *ProxyConds) Do(h RespHandler) { _ = "STUB: not implemented"; return }
 
 // OnResponse is used when adding a response-filter to the HTTP proxy, usual pattern is
 //
 //	proxy.OnResponse(cond1,cond2).Do(handler) // handler.Handle(resp,ctx) will be used
 //				// if cond1.HandleResp(resp) && cond2.HandleResp(resp)
 func (proxy *ProxyHttpServer) OnResponse(conds ...RespCondition) *ProxyConds {
-	return &ProxyConds{proxy, make([]ReqCondition, 0), conds}
+	_ = "STUB: not implemented"
+	return nil
 }
 
 // AlwaysMitm is a HttpsHandler that always eavesdrop https connections, for example to
@@ -373,15 +266,6 @@ var AlwaysReject FuncHttpsHandler = func(host string, ctx *ProxyCtx) (*ConnectAc
 // to a byte array in memory, would run the user supplied f function on the byte arra,
 // and will replace the body of the original response with the resulting byte array.
 func HandleBytes(f func(b []byte, ctx *ProxyCtx) []byte) RespHandler {
-	return FuncRespHandler(func(resp *http.Response, ctx *ProxyCtx) *http.Response {
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			ctx.Warnf("Cannot read response %s", err)
-			return resp
-		}
-		resp.Body.Close()
-
-		resp.Body = io.NopCloser(bytes.NewBuffer(f(b, ctx)))
-		return resp
-	})
+	_ = "STUB: not implemented"
+	return *new(RespHandler)
 }

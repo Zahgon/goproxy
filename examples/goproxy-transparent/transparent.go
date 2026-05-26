@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -16,11 +15,7 @@ import (
 	"github.com/inconshreveable/go-vhost"
 )
 
-func orPanic(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+func orPanic(err error) { _ = "STUB: not implemented"; return }
 
 func main() {
 	verbose := flag.Bool("v", true, "should every proxy request be logged to stdout")
@@ -113,19 +108,14 @@ func main() {
 
 // copied/converted from https.go
 func dial(ctx context.Context, proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
-	if proxy.Tr.DialContext != nil {
-		return proxy.Tr.DialContext(ctx, network, addr)
-	}
-	var d net.Dialer
-	return d.DialContext(ctx, network, addr)
+	_ = "STUB: not implemented"
+	return *new(net.Conn), nil
 }
 
 // copied/converted from https.go
 func connectDial(ctx context.Context, proxy *goproxy.ProxyHttpServer, network, addr string) (c net.Conn, err error) {
-	if proxy.ConnectDial == nil {
-		return dial(ctx, proxy, network, addr)
-	}
-	return proxy.ConnectDial(network, addr)
+	_ = "STUB: not implemented"
+	return *new(net.Conn), nil
 }
 
 type dumbResponseWriter struct {
@@ -133,20 +123,20 @@ type dumbResponseWriter struct {
 }
 
 func (dumb dumbResponseWriter) Header() http.Header {
-	panic("Header() should not be called on this ResponseWriter")
+	_ = "STUB: not implemented"
+	return *new(http.Header)
 }
 
 func (dumb dumbResponseWriter) Write(buf []byte) (int, error) {
-	if bytes.Equal(buf, []byte("HTTP/1.0 200 OK\r\n\r\n")) {
-		return len(buf), nil // throw away the HTTP OK response from the faux CONNECT request
-	}
-	return dumb.Conn.Write(buf)
+	_ = "STUB: not implemented"
+	return 0, nil
 }
 
-func (dumb dumbResponseWriter) WriteHeader(code int) {
-	panic("WriteHeader() should not be called on this ResponseWriter")
-}
+// throw away the HTTP OK response from the faux CONNECT request
+
+func (dumb dumbResponseWriter) WriteHeader(code int) { _ = "STUB: not implemented"; return }
 
 func (dumb dumbResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	return dumb, bufio.NewReadWriter(bufio.NewReader(dumb), bufio.NewWriter(dumb)), nil
+	_ = "STUB: not implemented"
+	return *new(net.Conn), nil, nil
 }

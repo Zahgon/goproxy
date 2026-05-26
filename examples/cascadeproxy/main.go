@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/subtle"
-	"encoding/base64"
 	"io"
 	"log"
 	"net/http"
@@ -15,9 +14,7 @@ import (
 
 const _proxyAuthHeader = "Proxy-Authorization"
 
-func SetBasicAuth(username, password string, req *http.Request) {
-	req.Header.Set(_proxyAuthHeader, "Basic "+base64.StdEncoding.EncodeToString([]byte(username+":"+password)))
-}
+func SetBasicAuth(username, password string, req *http.Request) { _ = "STUB: not implemented"; return }
 
 func main() {
 	username, password := "foo", "bar"
